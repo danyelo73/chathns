@@ -1,0 +1,12 @@
+{
+	"path": "/var/www/html/hnschat",
+
+	"sqlHost": "",
+	"sqlUser": "",
+	"sqlPass": "",
+	"sqlDatabase": "",
+
+	"typingDelay": 2000,
+
+	"tenorKey": ""
+}

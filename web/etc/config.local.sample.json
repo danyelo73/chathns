@@ -1,0 +1,9 @@
+{
+  "path": "/ABSOLUTE/PATH/TO/hnschat-test/web",
+  "sqlHost": "127.0.0.1",
+  "sqlUser": "hnschat",
+  "sqlPass": "CHANGE_ME",
+  "sqlDatabase": "hnschat",
+  "typingDelay": 2000,
+  "tenorKey": ""
+}

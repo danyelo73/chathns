@@ -1,0 +1,14 @@
+{
+  "path": "/ABSOLUTE/PATH/TO/hnschat-test/server",
+  "sqlHost": "127.0.0.1",
+  "sqlUser": "hnschat",
+  "sqlPass": "CHANGE_ME",
+  "sqlDatabase": "hnschat",
+  "typingDelay": 2000,
+  "channelPrice": 50,
+  "expoKey": "",
+  "janusWs": "",
+  "janusKey": "",
+  "admin": [],
+  "localTestMode": true
+}

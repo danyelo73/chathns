@@ -1,0 +1,20 @@
+<Files *>
+	Header set Access-Control-Allow-Origin "*"
+	Header set Access-Control-Allow-Methods: "GET"
+</Files>
+
+<If "%{REQUEST_URI} =~ m#/(avatar.php)#">
+	Header set Cache-Control "max-age=1800, public"
+</If>
+<If "%{REQUEST_URI} =~ m#/(preview.php)#">
+	Header set Cache-Control "max-age=63072000, public"
+</If>
+<If "%{REQUEST_URI} =~ m#/(assets|uploads)/#">
+	Header set Cache-Control "max-age=63072000, public"
+</If>
+
+RewriteEngine on
+RewriteRule ^avatar/([A-Za-z0-9]+)/?$ etc/avatar.php?id=$1
+RewriteRule ^preview/([A-Za-z0-9]+)/?$ etc/preview.php?id=$1
+
+RewriteRule ^invite/([A-Za-z0-9-]+)/?$ id.php?invite=$1

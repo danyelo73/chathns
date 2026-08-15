@@ -1,0 +1,33 @@
+.DS_Store
+
+server/node_modules/
+logs/
+*.log
+
+server/config.json
+web/etc/config.json
+web/etc/config.php
+
+server/config.json.bak*
+web/etc/config.json.bak*
+web/etc/config.php.bak*
+
+*.bak
+*.bak-*
+*.bak.*
+
+*.tmp
+*.swp
+*~
+
+# Runtime / migration markers
+server/.handshakeuser-expiry-migrated
+
+# One-off command output / local scratch
+1cd
+
+# ALF one-time tickets
+web/data/alf-tickets/
+
+# Manual rollback/debug snapshots
+*.before-*

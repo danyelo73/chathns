@@ -1,0 +1,7 @@
+LOCAL TEST PACKAGE ONLY.
+
+Do not expose this package to the public Internet yet.
+The database schema was reconstructed from source queries and is not an upstream SQL dump.
+The local test mode intentionally bypasses HNS ownership verification for localhost testing.
+Varo/ShakeStation replacement with ALF Verify is NOT implemented yet.
+Video/Janus, push notifications and production reverse-proxy/TLS setup are NOT configured.
