@@ -1,7 +1,54 @@
-LOCAL TEST PACKAGE ONLY.
+ChatHNS PUBLIC SOURCE RELEASE
+=============================
 
-Do not expose this package to the public Internet yet.
-The database schema was reconstructed from source queries and is not an upstream SQL dump.
-The local test mode intentionally bypasses HNS ownership verification for localhost testing.
-Varo/ShakeStation replacement with ALF Verify is NOT implemented yet.
-Video/Janus, push notifications and production reverse-proxy/TLS setup are NOT configured.
+This repository contains the public source release of ChatHNS.
+
+ChatHNS is actively developed and the live service contains infrastructure
+and configuration that are intentionally not included in this repository.
+
+This repository is therefore not a ready-to-deploy copy of the production
+server.
+
+IMPORTANT
+---------
+
+- Production credentials and secrets are not included.
+- Production configuration is not included.
+- Runtime data, accounts, sessions and ALF tickets are not included.
+- Public HNS ownership verification requires external infrastructure.
+- ALF verification requires separate configuration and services.
+- Janus/video requires separate configuration.
+- Push services require separate configuration.
+- Third-party API services require their own credentials.
+- Production TLS/WSS/reverse-proxy configuration is not included.
+- Some legacy HNSChat code remains while ChatHNS development continues.
+
+The included local configuration samples are intended for development and
+inspection of the source.
+
+See INSTALL.md for local setup information.
+See SOURCE_NOTES.md for additional implementation notes.
+
+ORIGIN
+------
+
+ChatHNS is based on HNSChat, originally created by eskimo:
+
+https://github.com/hnschat/
+https://github.com/eskimo
+
+ChatHNS is maintained and extensively developed by Danyelo Dolce:
+
+https://github.com/danyelo73
+
+LICENSE
+-------
+
+The original HNSChat source is licensed under CC BY-NC-SA 4.0.
+
+The HNSChat-derived portions and adaptations in ChatHNS are distributed
+under CC BY-NC-SA 4.0.
+
+Third-party components retain their respective licenses.
+
+https://creativecommons.org/licenses/by-nc-sa/4.0/
