@@ -32,7 +32,8 @@ See SOURCE_NOTES.md for additional implementation notes.
 ORIGIN
 ------
 
-ChatHNS is based on HNSChat, originally created by eskimo:
+ChatHNS is based on the original HNSChat project by hnschat,
+created by eskimo:
 
 https://github.com/hnschat/
 https://github.com/eskimo

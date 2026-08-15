@@ -4,7 +4,7 @@ ChatHNS is a lightweight chat and community platform built around Handshake name
 
 Instead of relying only on conventional usernames, ChatHNS can use Handshake TLDs as identities and connects chat, groups and domain ownership.
 
-ChatHNS is based on HNSChat, originally created by [eskimo](https://github.com/eskimo).
+ChatHNS is based on the original HNSChat project by [hnschat](https://github.com/hnschat), created by [eskimo](https://github.com/eskimo).
 
 ChatHNS is maintained and extensively developed by [Danyelo Dolce](https://github.com/danyelo73).
 
@@ -42,8 +42,11 @@ See:
 
 ## HNSChat → ChatHNS
 
-Original HNSChat project:
+Original HNSChat organization:
 https://github.com/hnschat/
+
+Original developer:
+https://github.com/eskimo
 
 Original web source:
 https://github.com/hnschat/web
