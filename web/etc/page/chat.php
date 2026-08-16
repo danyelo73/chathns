@@ -599,6 +599,10 @@
 					<div class="icon delete"></div>
 					<span>Delete selected</span>
 				</li>
+				<li class="action bulkClear hidden" data-action="clearMessageSelection">
+					<div class="icon remove"></div>
+					<span>Cancel selection</span>
+				</li>
 				<li class="action delete error" data-action="deleteMessage">
 					<div class="icon delete"></div>
 					<span>Delete</span>
@@ -773,6 +777,7 @@
 							<div class="action pollComposerButton hidden" data-action="poll" title="Create Poll">📊</div>
 							<div class="inputs">
 								<textarea id="message" placeholder="Message"></textarea>
+								<div id="messageResponse" class="response"></div>
 							</div>
 							<div class="action icon emoji big" data-action="emojis"></div>
 						</div>

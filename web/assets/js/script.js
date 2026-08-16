@@ -424,6 +424,10 @@ this.mobile = false;
 						this.ui.errorResponse(body);
 						break;
 
+					case "MESSAGE":
+						this.ui.errorResponse(body);
+						break;
+
 					case "MESSAGES":
 						this.ui.setUserList();
 						this.ui.messagesLoading(false);
@@ -1551,6 +1555,21 @@ this.mobile = false;
 
 	sendMessage(conversation, message) {
 		if (!message.trim().length) {
+			return;
+		}
+
+		// Maximum plaintext message size: 16 KB.
+		let messageBytes = new TextEncoder().encode(message).length;
+
+		if (messageBytes > 16 * 1024) {
+			$("#messageResponse").html("Maximum message size is 16 KB.");
+
+			setTimeout(() => {
+				if ($("#messageResponse").html() === "Maximum message size is 16 KB.") {
+					$("#messageResponse").html("");
+				}
+			}, 5000);
+
 			return;
 		}
 

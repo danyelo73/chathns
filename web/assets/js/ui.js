@@ -3574,6 +3574,7 @@ $(".section#manageDomains .domains").empty();
 			menu.find("li.action.delete").addClass("hidden");
 			menu.find("li.action.bulkSelect").addClass("hidden");
 			menu.find("li.action.bulkDelete").addClass("hidden");
+			menu.find("li.action.bulkClear").addClass("hidden");
 
 			if (isChannel) {
 				if (isAdmin) {
@@ -3592,6 +3593,9 @@ $(".section#manageDomains .domains").empty();
 							.removeClass("hidden")
 							.find("span")
 							.text(`Delete selected (${marked})`);
+
+						menu.find("li.action.bulkClear")
+							.removeClass("hidden");
 					}
 				}
 			}
@@ -3701,6 +3705,16 @@ $(".section#manageDomains .domains").empty();
 		}
 
 		switch (body.type) {
+			case "MESSAGE":
+				$("#messageResponse").html(body.message);
+
+				setTimeout(() => {
+					if ($("#messageResponse").html() === body.message) {
+						$("#messageResponse").html("");
+					}
+				}, 5000);
+				break;
+
 			case "PM":
 			case "startConversation":
 				$(".popover[data-name=newConversation] .response").html(body.message);

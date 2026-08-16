@@ -46,8 +46,12 @@
 		error("Only JPEG, PNG, WebP, GIF and MP4 are supported.");
 	}
 
-	if ($size > 25600000) {
-		error("Maximum file size is 25MB.");
+	if ($type === "image" && $size > 10000000) {
+		error("Maximum image size is 10MB.");
+	}
+
+	if ($type === "video" && $size > 25000000) {
+		error("Maximum video size is 25MB.");
 	}
 
 	switch ($type) {
@@ -66,7 +70,7 @@
 	}
 
 	$id = generateCode("upload");
-	$insert = sql("INSERT INTO `uploads` (type, id, name, size, session) VALUES (?,?,?,?,?)", [$type, $id, $name, $size, $key]);
+	$insert = sql("INSERT INTO `uploads` (type, id, name, size, session, created) VALUES (?,?,?,?,?,?)", [$type, $id, $name, $size, $key, time()]);
 	$path = $GLOBALS["path"]."/uploads/".$id;
 	$move = move_uploaded_file($tmp, $path);
 

@@ -20,6 +20,13 @@ var pms = [];
 var slds = [];
 var typing = {};
 
+// Simple in-memory message flood protection.
+// Per account:
+// - max 4 messages in 10 seconds
+// - 5th message triggers a 10 second pause
+// - 3rd identical message within 30 seconds is blocked
+var messageFlood = {};
+
 var userColumns = "d.id, d.domain, d.type, d.tld, d.avatar, d.locked, d.deleted, d.created, d.bio, d.admin, a.namespace, a.expires_at, s.pubkey pubkey, s.id sid, s.push push";
 
 const sql = mysql.createPool({
@@ -927,6 +934,86 @@ async function handle(ws, parsed) {
 			delete typing[ws.domain];
 
 			let message = body.message.trim();
+
+			// Absolute server-side safety limit.
+			// Client plaintext limit is 16 KB; PM encryption may enlarge it.
+			if (
+				command == "MESSAGE" &&
+				Buffer.byteLength(message, "utf8") > 64 * 1024
+			) {
+				sendError(
+					ws,
+					command,
+					"Message is too large."
+				);
+				break;
+			}
+
+			if (command == "MESSAGE" && ws.domain && message.length) {
+				let now = time();
+				let state = messageFlood[ws.domain] || {
+					times: [],
+					blockedUntil: 0,
+					lastMessage: "",
+					lastMessageTimes: []
+				};
+
+				// Temporary pause after flooding.
+				if (state.blockedUntil > now) {
+					sendError(
+						ws,
+						command,
+						`Too many messages. Try again in ${state.blockedUntil - now}s.`
+					);
+					messageFlood[ws.domain] = state;
+					break;
+				}
+
+				// Keep only messages from the last 10 seconds.
+				state.times = state.times.filter(t => now - t < 10);
+
+				// Four messages are allowed. The fifth starts the pause.
+				if (state.times.length >= 4) {
+					state.blockedUntil = now + 10;
+					messageFlood[ws.domain] = state;
+
+					sendError(
+						ws,
+						command,
+						"Too many messages. Please wait 10 seconds."
+					);
+					break;
+				}
+
+				let normalizedMessage = message.trim();
+
+				// Block the third identical consecutive message within 30 seconds.
+				if (state.lastMessage === normalizedMessage) {
+					state.lastMessageTimes =
+						state.lastMessageTimes.filter(t => now - t < 30);
+
+					if (state.lastMessageTimes.length >= 2) {
+						messageFlood[ws.domain] = state;
+
+						sendError(
+							ws,
+							command,
+							"Duplicate message blocked."
+						);
+						break;
+					}
+
+					state.lastMessageTimes.push(now);
+				}
+				else {
+					state.lastMessage = normalizedMessage;
+					state.lastMessageTimes = [now];
+				}
+
+				state.times.push(now);
+				messageFlood[ws.domain] = state;
+			}
+
 			if (message.length) {
 				let id = await generateID("message");
 				let t = time();

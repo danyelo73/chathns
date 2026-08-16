@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS uploads (
   name TEXT NOT NULL,
   size BIGINT UNSIGNED NOT NULL DEFAULT 0,
   session VARCHAR(64) NOT NULL,
+  created BIGINT UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (ai),
   UNIQUE KEY uq_uploads_id (id),
   KEY idx_uploads_session (session)

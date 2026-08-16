@@ -2544,6 +2544,16 @@ case "addSLD":
 					}
 					break;
 
+				case "clearMessageSelection":
+					{
+						$("#messages .messageRow.bulkSelected")
+							.removeClass("bulkSelected");
+
+						app.ui.close();
+						app.ui.enableTarget(target);
+					}
+					break;
+
 				case "deleteSelectedMessages":
 					{
 						let rows = $("#messages .messageRow.bulkSelected[data-id]");
@@ -3180,8 +3190,14 @@ case "addSLD":
 				return;
 			}
 
-			if (file.size > 25600000) {
-				alert("Maximum file size is 25MB.");
+			if (file.type.startsWith("image/") && file.size > 10000000) {
+				alert("Maximum image size is 10MB.");
+				input.value = "";
+				return;
+			}
+
+			if (file.type === "video/mp4" && file.size > 25000000) {
+				alert("Maximum video size is 25MB.");
 				input.value = "";
 				return;
 			}
@@ -3248,6 +3264,37 @@ case "addSLD":
 			let target = $(e.target);
 			let value = target.val();
 			app.ui.chatDisplayMode(value);
+		});
+
+		$("html").on("click", "#messages .messageRow", e => {
+			// Normal message clicks become selection clicks
+			// only after bulk selection has already been started.
+			if (!$("#messages .messageRow.bulkSelected[data-id]").length) {
+				return;
+			}
+
+			let target = $(e.target);
+
+			// Keep normal interactive elements working.
+			if (
+				target.closest("a, .user, .favicon, .reply, .action, button, input, textarea").length
+			) {
+				return;
+			}
+
+			let row = $(e.currentTarget);
+
+			if (
+				row.hasClass("informational") ||
+				!row.attr("data-id")
+			) {
+				return;
+			}
+
+			e.preventDefault();
+			e.stopPropagation();
+
+			row.toggleClass("bulkSelected");
 		});
 
 		$("html").on("click", ".messageRow .reply .body", e => {
