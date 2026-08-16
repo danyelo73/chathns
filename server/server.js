@@ -685,6 +685,8 @@ async function handle(ws, parsed) {
 					name: c.name,
 					public: c.public,
 					hidden: c.hidden,
+					sort: c.sort,
+					color: c.color,
 					adminonly: c.adminonly,
 					tldadmin: c.tldadmin,
 					admins: c.admins,
@@ -831,6 +833,7 @@ async function handle(ws, parsed) {
 							name: c.name,
 							public: c.public,
 							hidden: c.hidden,
+							color: c.color,
 							adminonly: c.adminonly,
 							tldadmin: c.tldadmin,
 							admins: c.admins,
@@ -1592,6 +1595,9 @@ async function handle(ws, parsed) {
 				await makeVideoRoom(id, name);
 				await fetchChannels();
 
+				let debugChannel = dataForChannel(body.channel);
+
+
 				sendSuccess(ws, command, {
 					id: id,
 					name: name,
@@ -1868,6 +1874,42 @@ async function handle(ws, parsed) {
 				let label = String(body.label || "").trim() || null;
 				let url = String(body.url || "").trim() || null;
 
+				let listSort = Number(channel.sort) || 0;
+				let groupColor = channel.color || null;
+
+				if (Object.prototype.hasOwnProperty.call(body, "color")) {
+					let requestedColor = String(body.color || "").trim();
+
+					if (/^#[0-9a-fA-F]{6}$/.test(requestedColor)) {
+						groupColor = requestedColor.toLowerCase();
+					}
+					else {
+						groupColor = null;
+					}
+				}
+
+				if (Object.prototype.hasOwnProperty.call(body, "sort")) {
+					let actor = dataForUser(ws.domain);
+
+					if (!isGlobalAdminUser(actor)) {
+						sendError(ws, command, "Only global ChatHNS admins can change list position.");
+						break;
+					}
+
+					let requestedSort = Number(body.sort);
+
+					if (
+						!Number.isInteger(requestedSort) ||
+						requestedSort < 0 ||
+						requestedSort > 99
+					) {
+						sendError(ws, command, "Invalid list position.");
+						break;
+					}
+
+					listSort = requestedSort;
+				}
+
 
 				let memberType = String(channel.membertype || "manual").toLowerCase();
 				let memberSource = channel.membersource || null;
@@ -2048,11 +2090,15 @@ async function handle(ws, parsed) {
 					channel.admins = staffJson;
 				}
 
+
+
 				await db(
-					"UPDATE channels SET public = ?, hidden = ?, adminonly = ?, label = ?, url = ?, membertype = ?, membersource = ?, members = ?, slds = ?, registry = ? WHERE id = ?",
+					"UPDATE channels SET public = ?, hidden = ?, sort = ?, color = ?, adminonly = ?, label = ?, url = ?, membertype = ?, membersource = ?, members = ?, slds = ?, registry = ? WHERE id = ?",
 					[
 						isPublic,
 						isHidden,
+						listSort,
+						groupColor,
 						adminOnly,
 						label,
 						url,
@@ -2067,6 +2113,8 @@ async function handle(ws, parsed) {
 
 				channel.public = isPublic;
 				channel.hidden = isHidden;
+				channel.sort = listSort;
+				channel.color = groupColor;
 				channel.adminonly = adminOnly;
 				channel.label = label;
 				channel.url = url;

@@ -448,15 +448,23 @@
 
 			<div class="subtitle groupSettingsName"></div>
 
-			<div class="setting">
+			<div class="setting groupBasicSetting">
 				<div class="subtitle">Display name</div>
 				<input type="text" name="groupLabel" placeholder="Optional">
 			</div>
 
 
-			<div class="setting">
+			<div class="setting groupBasicSetting">
 				<div class="subtitle">URL</div>
 				<input type="text" name="groupURL" placeholder="https://...">
+			</div>
+
+			<div class="setting groupBasicSetting quickMemberSetting">
+				<div class="subtitle">Member</div>
+				<div class="groupColorRow">
+					<input type="text" name="quickGroupMember" placeholder="TLD">
+					<div class="button" data-action="addGroupMember">+ Add (No Save needed)</div>
+				</div>
 			</div>
 
 			<div class="membershipProtected">
@@ -492,8 +500,9 @@
 			</div>
 
 
-			<div class="setting settingsMembersSetting">
+			<div class="setting settingsMembersSetting groupProtectedSetting hidden">
 				<div class="subtitle">Members</div>
+				<input type="text" name="groupMemberSearch" placeholder="Search member">
 				<textarea name="groupMembers" rows="9" placeholder='["mmsp","chathns"]'></textarea>
 				<div class="membershipFileActions">
 					<label class="button groupMembersUploadLabel">
@@ -504,12 +513,12 @@
 				</div>
 			</div>
 
-			<div class="setting groupStaffSetting">
+			<div class="setting groupStaffSetting groupBasicSetting">
 				<div class="subtitle">Group Staff 🛂</div>
 				<textarea name="groupStaffText" rows="3" placeholder="staff1, staff2"></textarea>
 			</div>
 
-			<div class="setting">
+			<div class="setting groupProtectedSetting hidden">
 				<div class="subtitle">Visibility</div>
 				<select name="groupVisibility">
 					<option value="public">Public</option>
@@ -518,12 +527,26 @@
 				</select>
 			</div>
 
-			<div class="setting">
+			<div class="setting groupProtectedSetting hidden">
 				<div class="subtitle">Mode</div>
 				<select name="groupMode">
 					<option value="group">Group</option>
 					<option value="channel">Channel</option>
 				</select>
+			</div>
+
+			<div class="setting groupSortSetting groupProtectedSetting hidden">
+				<div class="subtitle">List position</div>
+				<input type="number" name="groupSort" min="0" max="99" step="1" value="0">
+				<div class="subtitle">0 = activity · 1–99 = fixed at top</div>
+			</div>
+
+			<div class="setting groupColorSetting groupProtectedSetting hidden">
+				<div class="subtitle">Color</div>
+				<div class="groupColorRow">
+					<input type="color" name="groupColor" value="#808080">
+					<span class="action groupColorClear" data-action="clearGroupColor" title="No color">✕</span>
+				</div>
 			</div>
 
 			<div class="button" data-action="saveGroupSettings">Save</div>

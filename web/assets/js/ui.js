@@ -402,6 +402,14 @@ $(".section#manageDomains .domains").empty();
 		return fallback; 
 	}
 
+	toASCII(name) {
+		return punycode.ToASCII(String(name || ""));
+	}
+
+	toPunyUnicode(name) {
+		return punycode.ToUnicode(String(name || ""));
+	}
+
 	toUnicode(name) {
 		let puny = punycode.ToUnicode(name);
 		let zwj = nameToUnicode(puny);
@@ -529,6 +537,23 @@ $(".section#manageDomains .domains").empty();
 				<td class="title">${name}</td>
 			</tr>
 		`);
+
+		if (
+			tab == "channels" &&
+			/^#[0-9a-fA-F]{6}$/.test(String(data.color || ""))
+		) {
+			let hex = data.color.substring(1);
+			let r = parseInt(hex.substring(0, 2), 16);
+			let g = parseInt(hex.substring(2, 4), 16);
+			let b = parseInt(hex.substring(4, 6), 16);
+
+			html.css(
+				"background-color",
+				`rgba(${r}, ${g}, ${b}, 0.20)`
+			);
+
+			html.attr("data-group-color", data.color);
+		}
 
 		if (tab == "pms") {
 			let active = "";
@@ -871,6 +896,37 @@ $(".section#manageDomains .domains").empty();
 
 		$(".messageHeader table").empty();
 		$(".messageHeader table").append($(`#conversations tr.active`).clone());
+
+		if (this.parent.isChannel(this.parent.conversation)) {
+			let channel = this.parent.channelForID(this.parent.conversation);
+			let url = channel ? String(channel.url || "").trim() : "";
+
+			if (url) {
+				let href = /^https?:\/\//i.test(url)
+					? url
+					: "https://" + url;
+
+				let title = $(".messageHeader table td.title");
+				let text = title.text();
+
+				title
+					.empty()
+					.addClass("groupHeaderLink")
+					.attr({
+						"data-url": href,
+						title: href
+					})
+					.append(
+						$("<a>")
+							.attr({
+								href: href,
+								target: "_blank",
+								rel: "noopener noreferrer"
+							})
+							.text(text)
+					);
+			}
+		}
 		$(".messageHeader table tr").removeClass("hidden");
 
 		this.setPinnedMessage();
@@ -1038,9 +1094,37 @@ $(".section#manageDomains .domains").empty();
 		}
 
 		popover.data("membershipUnlocked", false);
+		popover.data("groupColorActive", Boolean(channel.color));
+
+		popover.find(".membershipUnlockButton")
+			.text("Unlock")
+			.attr("data-action", "unlockGroupMembership")
+			.removeClass("hidden");
+
+		popover.find(".membershipLockRow .subtitle")
+			.text("🔒 Access & Group Actions");
+
+		popover.find(".membershipProtected").removeClass("unlocked");
+		popover.find(".membershipLockedArea").addClass("hidden");
+		popover.find(".groupProtectedSetting").addClass("hidden");
+		popover.find(".groupBasicSetting").removeClass("hidden");
+		popover.find(".membershipDeleteButton").addClass("hidden");
+		popover.find(".membershipUnlockButton").removeClass("hidden");
 
 		popover.find('input[name="groupLabel"]').val(channel.label || "");
 		popover.find('input[name="groupURL"]').val(channel.url || "");
+
+		// Global list position. Only ChatHNS global admins may change it.
+		popover.find('input[name="groupSort"]')
+			.val(Number(channel.sort) || 0)
+			.prop("disabled", true);
+
+		popover.find('input[name="groupColor"]')
+			.val(channel.color || "#808080")
+			.prop("disabled", true);
+
+		popover.find(".groupSortSetting")
+			.addClass("hidden");
 
 		popover.find('select[name="groupAccess"]')
 			.val(access)
@@ -1050,11 +1134,9 @@ $(".section#manageDomains .domains").empty();
 			.val(channel.membersource || "10k")
 			.prop("disabled", true);
 
-		popover.find(".settingsRuleSetting")
-			.toggleClass("hidden", access !== "rule");
-
-		popover.find(".settingsMembersSetting")
-			.toggleClass("hidden", access !== "members");
+		// Protected membership details stay hidden until Unlock.
+		popover.find(".settingsRuleSetting").addClass("hidden");
+		popover.find(".settingsMembersSetting").addClass("hidden");
 
 		popover.find('textarea[name="groupMembers"]')
 			.val(JSON.stringify(members, null, 2))
@@ -1850,6 +1932,40 @@ $(".section#manageDomains .domains").empty();
 	moveConversationToTop(conversation) {
 		let div = $(`#conversations tr[data-id=${conversation}]`);
 		let parent = div.parent();
+
+		if (this.parent.isChannel(conversation)) {
+			let channel = this.parent.channelForID(conversation);
+
+			// Fixed groups never move because of activity.
+			if (channel && Number(channel.sort) > 0) {
+				return;
+			}
+
+			// Normal groups move only below all fixed groups.
+			let lastFixed = null;
+
+			parent.find("tr").each((k, row) => {
+				let id = $(row).data("id");
+				let c = this.parent.channelForID(id);
+
+				if (c && Number(c.sort) > 0) {
+					lastFixed = $(row);
+				}
+			});
+
+			div.remove();
+
+			if (lastFixed && lastFixed.length) {
+				div.insertAfter(lastFixed);
+			}
+			else {
+				parent.prepend(div);
+			}
+
+			return;
+		}
+
+		// PM behaviour remains unchanged.
 		div.remove();
 		parent.prepend(div);
 	}

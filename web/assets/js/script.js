@@ -591,7 +591,21 @@ this.mobile = false;
 				this.ui.clear("channels");
 				this.channels = body;
 				if (this.channels.length) {
+					// Groups with sort > 0 stay fixed at the top.
+					// All remaining groups continue to be sorted by activity.
 					let sorted = this.channels.sort((a, b) => {
+						let aSort = Number(a.sort) || 0;
+						let bSort = Number(b.sort) || 0;
+
+						if (aSort > 0 || bSort > 0) {
+							if (aSort === 0) return 1;
+							if (bSort === 0) return -1;
+
+							if (aSort !== bSort) {
+								return aSort - bSort;
+							}
+						}
+
 						let aActivity = ("activity" in a) ? Number(a.activity) : -1;
 						let bActivity = ("activity" in b) ? Number(b.activity) : -1;
 
@@ -599,13 +613,13 @@ this.mobile = false;
 					});
 
 					$.each(sorted, (k, channel) => {
-						this.ui.conversation("channels", channel);
+												this.ui.conversation("channels", channel);
 					});
-				}
-				this.ui.updateConversations();
-				this.ui.updateInputBar();
-				this.gotChannels = true;
-				this.ws.send(`MENTIONS`);
+									}
+								this.ui.updateConversations();
+								this.ui.updateInputBar();
+								this.gotChannels = true;
+								this.ws.send(`MENTIONS`);
 				this.ready(true);
 				break;
 

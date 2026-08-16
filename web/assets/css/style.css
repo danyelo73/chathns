@@ -3857,3 +3857,66 @@ body[data-page=id] .form .logo img {
 .message.poll .pollOption.pollLocked:hover {
 	opacity: 0.7;
 }
+
+
+/* Group color selector */
+.groupColorRow {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.groupColorRow input[type="color"] {
+	flex: 1;
+}
+
+.groupColorClear {
+	flex: 0 0 auto;
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+/* Compact protected group settings */
+.popover[data-name="groupSettings"] .groupSortSetting .subtitle:last-child {
+	white-space: nowrap;
+	font-size: 14px;
+}
+
+.popover[data-name="groupSettings"] .groupColorSetting {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 12px;
+}
+
+.popover[data-name="groupSettings"] .groupColorSetting > .subtitle {
+	margin: 0;
+}
+
+.popover[data-name="groupSettings"] .groupColorSetting input[name="groupColor"] {
+	width: 100%;
+	min-width: 0;
+}
+
+.popover[data-name="groupSettings"] .groupColorSetting [data-action="clearGroupColor"] {
+	margin: 0;
+	width: auto;
+	min-width: 0;
+	padding: 0 4px;
+	background: transparent;
+	border: 0;
+	font-size: 24px;
+}
+
+/* Group header URL */
+.messageHeader tr[data-type="channels"] td.groupHeaderLink {
+	pointer-events: auto;
+	cursor: pointer;
+	position: relative;
+	z-index: 2;
+}
+
+.messageHeader tr[data-type="channels"] td.groupHeaderLink a {
+	pointer-events: auto;
+}

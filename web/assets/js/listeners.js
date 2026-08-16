@@ -1,3 +1,4 @@
+let { punycode } = await import(`./punycode.js?r=${revision}`);
 export class listeners {
 	constructor(app) {
 		this.gifTimer;
@@ -25,6 +26,19 @@ export class listeners {
 		});
 
 		$(document).on("keydown", e => {
+			let keyTarget = $(e.target);
+
+			/*
+			 * Group member search handles its own keyboard input.
+			 * Do not redirect Enter or typed characters to chat input.
+			 */
+			if (
+				keyTarget.closest('.popover[data-name="groupSettings"]').length &&
+				keyTarget.attr("name") === "groupMemberSearch"
+			) {
+				return;
+			}
+
 			if (app.isKey(e, 27)) {
 				e.preventDefault();
 				
@@ -1419,9 +1433,17 @@ export class listeners {
 
 							data.members = [...new Set(
 								members
-									.map(v => String(v).trim())
+									.map(v => {
+										v = String(v).trim();
+										try {
+											return app.ui.toASCII(v).toLowerCase();
+										}
+										catch {
+											return v.toLowerCase();
+										}
+									})
 									.filter(Boolean)
-							)];
+							)].sort((a, b) => a.localeCompare(b));
 						}
 
 						app.ws.send(`CREATECHANNEL ${JSON.stringify(data)}`);
@@ -1793,6 +1815,74 @@ export class listeners {
 					}
 					break;
 
+				case "addGroupMember":
+					{
+						let popover = target.closest(".popover");
+						let id = popover.find('input[name="groupID"]').val();
+						let channel = app.channelForID(id);
+						let input = popover.find('input[name="quickGroupMember"]');
+						let member = input.val().trim();
+
+						if (member) {
+							try {
+								member = app.ui.toASCII(member).toLowerCase();
+							}
+							catch {}
+						}
+
+						if (!channel || !member) {
+							app.ui.enableTarget(target);
+							break;
+						}
+
+						let members = [];
+
+						try {
+							members = Array.isArray(channel.members)
+								? [...channel.members]
+								: JSON.parse(channel.members || "[]");
+						}
+						catch {
+							members = [];
+						}
+
+						if (!Array.isArray(members)) {
+							members = [];
+						}
+
+						members = members
+							.map(v => String(v).trim().toLowerCase())
+							.filter(Boolean);
+
+						if (!members.includes(member)) {
+							members.push(member);
+						}
+
+						members = [...new Set(members)]
+							.sort((a, b) => a.localeCompare(b));
+
+						let visibility = Number(channel.hidden) === 1
+							? "hidden"
+							: (Number(channel.public) === 1 ? "public" : "private");
+
+						let data = {
+							channel: id,
+							label: channel.label || "",
+							url: channel.url || "",
+							visibility: visibility,
+							mode: Number(channel.adminonly) === 1 ? "channel" : "group",
+							members: members
+						};
+
+						app.ws.send(
+							`SETCHANNELSETTINGS ${JSON.stringify(data)}`
+						);
+
+						input.val("");
+						app.ui.enableTarget(target);
+					}
+					break;
+
 				case "saveGroupSettings":
 					{
 						let popover = target.closest(".popover");
@@ -1819,6 +1909,21 @@ export class listeners {
 							visibility: popover.find('select[name="groupVisibility"]').val(),
 							mode: popover.find('select[name="groupMode"]').val()
 						};
+
+						if (canChangeAccess) {
+							let sort = Number(
+								popover.find('input[name="groupSort"]').val()
+							);
+
+							if (!Number.isInteger(sort) || sort < 0 || sort > 99) {
+								sort = 0;
+							}
+
+							data.sort = sort;
+							data.color = popover.data("groupColorActive")
+								? popover.find('input[name="groupColor"]').val()
+								: "";
+						}
 
 
 						/*
@@ -1863,9 +1968,9 @@ export class listeners {
 
 							data.members = [...new Set(
 								members
-									.map(v => String(v).trim())
+									.map(v => String(v).trim().toLowerCase())
 									.filter(Boolean)
-							)];
+							)].sort((a, b) => a.localeCompare(b));
 						}
 
 						// Staff is independent from the Membership lock.
@@ -1890,9 +1995,79 @@ export class listeners {
 					}
 					break;
 
+				case "lockGroupSettings":
+					{
+						let popover = target.closest(".popover");
+
+						popover.data("membershipUnlocked", false);
+
+						popover.find(".membershipProtected").removeClass("unlocked");
+						popover.find(".membershipLockedArea").addClass("hidden");
+						popover.find(".groupProtectedSetting").addClass("hidden");
+						popover.find(".settingsRuleSetting").addClass("hidden");
+						popover.find(".settingsMembersSetting").addClass("hidden");
+						popover.find(".groupBasicSetting").removeClass("hidden");
+						popover.find(".membershipDeleteButton").addClass("hidden");
+
+						popover.find('[name="groupAccess"]').prop("disabled", true);
+						popover.find('[name="groupRule"]').prop("disabled", true);
+						popover.find('[name="groupSort"]').prop("disabled", true);
+						popover.find('[name="groupColor"]').prop("disabled", true);
+
+						popover.find(".membershipLockRow .subtitle")
+							.text("🔒 Access & Group Actions");
+
+						target
+							.text("Unlock")
+							.attr("data-action", "unlockGroupMembership");
+
+						app.ui.enableTarget(target);
+					}
+					break;
+
+				case "clearGroupColor":
+					{
+						let popover = target.closest(".popover");
+
+						popover.data("groupColorActive", false);
+						popover.find('input[name="groupColor"]').val("#808080");
+
+						app.ui.enableTarget(target);
+					}
+					break;
+
 				case "unlockGroupMembership":
 					{
 						let popover = target.closest(".popover");
+
+						/*
+						 * Same button is a real Unlock / Lock toggle.
+						 * Locking never asks for confirmation.
+						 */
+						if (popover.data("membershipUnlocked") === true) {
+							popover.data("membershipUnlocked", false);
+
+							popover.find(".membershipProtected").removeClass("unlocked");
+							popover.find(".membershipLockedArea").addClass("hidden");
+							popover.find(".groupProtectedSetting").addClass("hidden");
+							popover.find(".settingsRuleSetting").addClass("hidden");
+							popover.find(".settingsMembersSetting").addClass("hidden");
+							popover.find(".groupBasicSetting").removeClass("hidden");
+							popover.find(".membershipDeleteButton").addClass("hidden");
+
+							popover.find('[name="groupAccess"]').prop("disabled", true);
+							popover.find('[name="groupRule"]').prop("disabled", true);
+							popover.find('[name="groupSort"]').prop("disabled", true);
+							popover.find('[name="groupColor"]').prop("disabled", true);
+
+							popover.find(".membershipLockRow .subtitle")
+								.text("🔒 Access & Group Actions");
+
+							target.text("Unlock");
+
+							app.ui.enableTarget(target);
+							break;
+						}
 						let id = popover.find('input[name="groupID"]').val();
 						let channel = app.channelForID(id);
 
@@ -1920,21 +2095,28 @@ export class listeners {
 
 						popover.data("membershipUnlocked", true);
 						popover.find(".membershipProtected").addClass("unlocked");
+						popover.find(".membershipLockedArea").removeClass("hidden");
+						popover.find(".groupProtectedSetting").removeClass("hidden");
+						popover.find(".groupBasicSetting").addClass("hidden");
 
 						let me = app.userForID(app.domain);
 						let canChangeAccess = app.ui.isGlobalAdmin(me);
 
 						popover.find(".membershipLockRow .subtitle").text(
-							canChangeAccess ? "🔓 Access & Group Actions" : "🔓 Group Actions"
+							canChangeAccess ? "🔓 Group Settings" : "🔓 Group Actions"
 						);
 
 						if (canChangeAccess) {
 							popover.find('[name="groupAccess"]').prop("disabled", false);
-							popover.find('[name="groupRule"]').prop("disabled", false);
+							popover.find('[name="groupSort"]').prop("disabled", false);
+							popover.find('[name="groupColor"]').prop("disabled", false);
+
+							popover.find('[name="groupAccess"]').trigger("change");
 						}
 
 						popover.find(".membershipDeleteButton").removeClass("hidden");
-						target.addClass("hidden");
+
+						target.text("Lock");
 
 						app.ui.enableTarget(target);
 					}
@@ -2937,8 +3119,17 @@ case "addSLD":
 		});
 
 		$("html").on("keyup", "input", e => {
+			let target = $(e.target);
+
+			// Member Search handles Enter itself.
+			if (
+				target.closest('.popover[data-name="groupSettings"]').length &&
+				target.attr("name") === "groupMemberSearch"
+			) {
+				return;
+			}
+
 			if (app.isKey(e, 13)) {
-				let target = $(e.target);
 				let submit = target.parent().find(".button").last();
 				if (!submit.length) {
 					submit = target.closest(".section").find(".button").last();
@@ -3048,6 +3239,11 @@ case "addSLD":
 			app.ui.root.style.setProperty(name, value);
 		});
 
+		$("html").on("input change", '.popover[data-name="groupSettings"] input[name="groupColor"]', e => {
+			let popover = $(e.currentTarget).closest(".popover");
+			popover.data("groupColorActive", true);
+		});
+
 		$("html").on("change", ".popover[data-name=settings] select[name=chatDisplayMode]", e => {
 			let target = $(e.target);
 			let value = target.val();
@@ -3058,6 +3254,18 @@ case "addSLD":
 			let target = $(e.target);
 			let message = target.closest(".reply").data("id");
 			app.ui.gotoMessage(message);
+		});
+
+		$("html").on("click", ".messageHeader td.groupHeaderLink", e => {
+			if ($(e.target).is("a")) {
+				return;
+			}
+
+			let url = $(e.currentTarget).attr("data-url");
+
+			if (url) {
+				window.open(url, "_blank", "noopener");
+			}
 		});
 
 		$("html").on("click", ".pinnedMessage", e => {
@@ -3092,6 +3300,213 @@ case "addSLD":
 	}
 }
 
+// Group member search.
+// - Search field keeps keyboard focus.
+// - Finds text at beginning, middle or end.
+// - Searches stored xn-- value and decoded Unicode/emoji.
+// - Enter cycles to the next result.
+function groupMemberSearch(popover, advance = false) {
+	let input = popover.find('input[name="groupMemberSearch"]')[0];
+	let textarea = popover.find('textarea[name="groupMembers"]')[0];
+
+	if (!input || !textarea) return;
+
+	let query = String(input.value || "").trim();
+
+	if (!query) {
+		popover.data("groupMemberSearchQuery", "");
+		popover.data("groupMemberSearchIndex", 0);
+		input.title = "";
+		return;
+	}
+
+	try {
+		if (/^https?:\/\//i.test(query)) {
+			let url = new URL(query);
+			let parts = url.pathname.split("/").filter(Boolean);
+
+			if (parts.length) {
+				query = decodeURIComponent(parts[parts.length - 1]);
+			}
+		}
+	}
+	catch {}
+
+	query = query.replace(/^\/+|\/+$/g, "");
+
+	let normalize = value => String(value || "")
+		.normalize("NFC")
+		.replace(/\uFE0F/g, "")
+		.toLowerCase();
+
+	let qUnicode = normalize(query);
+	let qAscii = qUnicode;
+
+	try {
+		let asciiInput = String(query || "")
+			.normalize("NFC")
+			.replace(/\uFE0F/g, "");
+
+		qAscii = String(punycode.ToASCII(asciiInput) || "")
+			.trim()
+			.toLowerCase();
+	}
+	catch {}
+
+	let lines = textarea.value.split("\n");
+	let matches = [];
+
+	lines.forEach((line, lineIndex) => {
+		let stored = String(line || "")
+			.replace(/^[\s"\[]+|[\s",\]]+$/g, "")
+			.trim();
+
+		if (!stored) return;
+
+		let ascii = normalize(stored);
+		let rawUnicode = ascii;
+		let displayUnicode = ascii;
+
+		try {
+			rawUnicode = normalize(punycode.ToUnicode(stored));
+		}
+		catch {}
+
+		try {
+			displayUnicode = normalize(punycode.ToUnicode(stored));
+		}
+		catch {}
+
+		if (
+			ascii.includes(qAscii) ||
+			ascii.includes(qUnicode) ||
+			rawUnicode.includes(qUnicode) ||
+			displayUnicode.includes(qUnicode)
+		) {
+			matches.push({
+				lineIndex: lineIndex,
+				stored: stored
+			});
+		}
+	});
+
+	if (!matches.length) {
+		popover.data("groupMemberSearchQuery", qUnicode);
+		popover.data("groupMemberSearchIndex", 0);
+		input.title = "No match";
+		return;
+	}
+
+	let oldQuery = String(
+		popover.data("groupMemberSearchQuery") || ""
+	);
+
+	let index = Number(
+		popover.data("groupMemberSearchIndex")
+	) || 0;
+
+	if (oldQuery !== qUnicode) {
+		index = 0;
+	}
+	else if (advance) {
+		index++;
+
+		if (index >= matches.length) {
+			index = 0;
+		}
+	}
+
+	popover.data("groupMemberSearchQuery", qUnicode);
+	popover.data("groupMemberSearchIndex", index);
+
+	let match = matches[index];
+
+	// Calculate exact character position in textarea.
+	let offset = 0;
+
+	for (let i = 0; i < match.lineIndex; i++) {
+		offset += lines[i].length + 1;
+	}
+
+	let inside = lines[match.lineIndex].indexOf(match.stored);
+
+	if (inside < 0) inside = 0;
+
+	try {
+		textarea.setSelectionRange(
+			offset + inside,
+			offset + inside + match.stored.length
+		);
+	}
+	catch {}
+
+	// Scroll matching row into view without changing focus.
+	let maxScroll = Math.max(
+		0,
+		textarea.scrollHeight - textarea.clientHeight
+	);
+
+	textarea.scrollTop =
+		(match.lineIndex / Math.max(1, lines.length - 1)) *
+		maxScroll;
+
+	input.title =
+		`${index + 1} / ${matches.length}: ${match.stored}`;
+
+	input.focus();
+}
+
+
+$(document).on(
+	"input",
+	'.popover[data-name="groupSettings"] input[name="groupMemberSearch"]',
+	function() {
+		let popover = $(this).closest(".popover");
+
+		// Any changed search text begins again with result 1.
+		popover.data("groupMemberSearchQuery", "");
+		popover.data("groupMemberSearchIndex", 0);
+
+		groupMemberSearch(popover, false);
+	}
+);
+
+
+$(document).on(
+	"keydown",
+	'.popover[data-name="groupSettings"] input[name="groupMemberSearch"]',
+	function(e) {
+		if (e.key !== "Enter") {
+			return;
+		}
+
+		e.preventDefault();
+		e.stopPropagation();
+		e.stopImmediatePropagation();
+
+		groupMemberSearch(
+			$(this).closest(".popover"),
+			true
+		);
+
+		return false;
+	}
+);
+
+
+$(document).on(
+	"keyup",
+	'.popover[data-name="groupSettings"] input[name="groupMemberSearch"]',
+	function(e) {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+			return false;
+		}
+	}
+);
+
 // Group access UI helpers.
 $(document).on("change", '.popover[data-name="createGroup"] select[name="groupAccess"]', function() {
 	let popover = $(this).closest(".popover");
@@ -3104,9 +3519,16 @@ $(document).on("change", '.popover[data-name="createGroup"] select[name="groupAc
 $(document).on("change", '.popover[data-name="groupSettings"] select[name="groupAccess"]', function() {
 	let popover = $(this).closest(".popover");
 	let access = $(this).val();
+	let unlocked = popover.data("membershipUnlocked") === true;
 
-	popover.find(".settingsRuleSetting").toggleClass("hidden", access !== "rule");
-	popover.find(".settingsMembersSetting").toggleClass("hidden", access !== "members");
+	popover.find(".settingsRuleSetting")
+		.toggleClass("hidden", access !== "rule");
+
+	popover.find('[name="groupRule"]')
+		.prop("disabled", !unlocked || access !== "rule");
+
+	popover.find(".settingsMembersSetting")
+		.toggleClass("hidden", access !== "members");
 });
 
 $(document).on("change", '.popover[data-name="createGroup"] input[name="groupMembersFile"]', function() {
