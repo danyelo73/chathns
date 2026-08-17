@@ -10,5 +10,7 @@
   "janusWs": "",
   "janusKey": "",
   "admin": [],
-  "localTestMode": true
+  "localTestMode": true,
+  "rootAdmin": "admin.example",
+  "systemAccount": "system.example"
 }

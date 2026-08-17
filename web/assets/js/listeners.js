@@ -206,7 +206,25 @@ export class listeners {
 							case "me":
 								data = {
 									hnschat: 1,
+									localCommand: true,
 									action: rest
+								};
+								app.sendMessage(app.conversation, JSON.stringify(data));
+								break;
+
+							case "help":
+								data = {
+									hnschat: 1,
+									message: "/help"
+								};
+								app.sendMessage(app.conversation, JSON.stringify(data));
+								break;
+
+							case "dice":
+								data = {
+									hnschat: 1,
+									localCommand: true,
+									message: ["⚀","⚁","⚂","⚃","⚄","⚅"][Math.floor(Math.random() * 6)]
 								};
 								app.sendMessage(app.conversation, JSON.stringify(data));
 								break;
@@ -214,6 +232,7 @@ export class listeners {
 							case "shrug":
 								data = {
 									hnschat: 1,
+									localCommand: true,
 									message: "¯\\_(ツ)_/¯"
 								};
 								app.sendMessage(app.conversation, JSON.stringify(data));
@@ -222,6 +241,7 @@ export class listeners {
 							case "fancy":
 								data = {
 									hnschat: 1,
+									localCommand: true,
 									message: rest,
 									style: command
 								};
@@ -231,6 +251,7 @@ export class listeners {
 							case "confetti":
 								data = {
 									hnschat: 1,
+									localCommand: true,
 									message: rest,
 									effect: command
 								};
@@ -240,12 +261,18 @@ export class listeners {
 							case "slap":
 								data = {
 									hnschat: 1,
+									localCommand: true,
 									action: `slaps ${rest} around a bit with a large trout`
 								};
 								app.sendMessage(app.conversation, JSON.stringify(data));
 								break;
 
 							default:
+								data = {
+									hnschat: 1,
+									message: "/" + replaced
+								};
+								app.sendMessage(app.conversation, JSON.stringify(data));
 								break;
 						}
 					}
@@ -304,7 +331,12 @@ export class listeners {
 			target.addClass("active");
 
 			let completion = target.find(".title").html();
-			if (target.hasClass("user")) {
+
+			if (target.hasClass("command")) {
+				// Command rows already contain the leading slash.
+				completion = `${completion} `;
+			}
+			else if (target.hasClass("user")) {
 				completion = `@${completion}/`;
 			}
 			else {
@@ -881,7 +913,7 @@ export class listeners {
 
 							let rootAdmin = String(
 								popover.find(".groupAccountsSection").attr("data-root-admin") ||
-								"admin.chathns"
+								""
 							).trim().toLowerCase();
 
 							let users = Array.isArray(app.users)

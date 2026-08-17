@@ -228,7 +228,7 @@
 				 * Root admin is configured locally and cannot be changed
 				 * through the web account-management panel.
 				 */
-				$rootAdmin = "admin.chathns";
+				$rootAdmin = "";
 				$rootConfigPath = dirname(__DIR__)."/server/config.json";
 
 				if (is_file($rootConfigPath)) {
@@ -391,7 +391,7 @@
 				/*
 				 * Root admin comes from the local server config.
 				 */
-				$rootAdmin = "admin.chathns";
+				$rootAdmin = "";
 				$rootConfigPath = dirname(__DIR__)."/server/config.json";
 
 				if (is_file($rootConfigPath)) {
@@ -690,7 +690,7 @@
 				error("Username and password required.");
 			}
 
-			// Accept "admin.chathns" or just "admin".
+			// Accept a full namespaced account or a bare username.
 			if (str_contains($login, ".")) {
 				$parts = explode(".", $login, 2);
 				$username = $parts[0];

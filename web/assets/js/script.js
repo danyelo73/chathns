@@ -70,7 +70,7 @@ this.mobile = false;
 
 		this.action = "\x01ACTION";
 
-		this.commands = ["me", "shrug", "slap"];
+		this.commands = ["help", "me", "shrug", "slap", "fancy", "confetti", "dice"];
 
 		this.hasBob;
 

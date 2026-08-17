@@ -1,19 +1,15 @@
 {
-	"path": "/root/hnschat-server",
-
-	"sqlHost": "",
-	"sqlUser": "",
-	"sqlPass": "",
-	"sqlDatabase": "",
-
-	"typingDelay": 2000,
-
-	"channelPrice": 50,
-
-	"expoKey": "",
-
-	"janusWs": "",
-	"janusKey": "",
-
-	"admin": []
+  "path": "/root/hnschat-server",
+  "sqlHost": "",
+  "sqlUser": "",
+  "sqlPass": "",
+  "sqlDatabase": "",
+  "typingDelay": 2000,
+  "channelPrice": 50,
+  "expoKey": "",
+  "janusWs": "",
+  "janusKey": "",
+  "admin": [],
+  "rootAdmin": "admin.example",
+  "systemAccount": "system.example"
 }

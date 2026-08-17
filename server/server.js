@@ -1023,6 +1023,33 @@ async function handle(ws, parsed) {
 				let reply = Boolean(replying);
 
 				/*
+				 * Public ChatHNS /help.
+				 *
+				 * This is a deterministic ChatHNS system command.
+				 *
+				 * The user's /help message is stored normally.
+				 * Afterward the server creates a normal reply whose
+				 * sender is configured through systemAccount.
+				 */
+				let chatHNSHelp = false;
+
+				if (command == "MESSAGE") {
+					try {
+						let parsedMessage = JSON.parse(message);
+
+						if (
+							parsedMessage &&
+							parsedMessage.hnschat == 1 &&
+							typeof parsedMessage.message == "string" &&
+							parsedMessage.message.trim().toLowerCase() == "/help"
+						) {
+							chatHNSHelp = true;
+						}
+					}
+					catch {}
+				}
+
+				/*
 				 * Polls may only be created inside groups/channels
 				 * and only by global admin, group owner or group staff.
 				 */
@@ -1124,6 +1151,87 @@ async function handle(ws, parsed) {
 						updateSeen(ws.session, conversation);
 						sendToUsers(command, body, conversation, id, user, t);
 						sendPushNotificationsIfNeeded(user, body);
+
+						/*
+						 * Public /help reply.
+						 *
+						 * systemAccount is used as the visible ChatHNS
+						 * system identity.
+						 *
+						 * /help does not require the system account to be
+						 * a member or staff of the conversation.
+						 */
+						if (chatHNSHelp) {
+							let bot = dataForDomain(String(config.systemAccount || "").toLowerCase());
+
+							if (bot) {
+								let helpID = await generateID("message");
+								let helpTime = time();
+
+								let helpMessage = JSON.stringify({
+									hnschat: 1,
+									message:
+`ChatHNS Commands
+
+/help
+Show commands
+
+/me TEXT
+Write an action
+
+/shrug
+¯\\_(ツ)_/¯
+
+/slap USER
+IRC slap
+
+/fancy TEXT
+Fancy message
+
+/confetti TEXT
+Confetti message
+
+/dice
+Roll a dice
+
+@USER
+Mention a user
+
+#GROUP
+Link a group`
+								});
+
+								await db(
+									"INSERT INTO messages (id, time, user, conversation, message, reply, replying) VALUES (?,?,?,?,?,?,?)",
+									[
+										helpID,
+										helpTime,
+										bot.id,
+										conversation,
+										helpMessage,
+										0,
+										null
+									]
+								);
+
+								sendToUsers(
+									"MESSAGE",
+									{
+										conversation: conversation,
+										message: helpMessage
+									},
+									conversation,
+									helpID,
+									bot.id,
+									helpTime
+								);
+							}
+							else {
+								console.log(
+									"Public /help: configured systemAccount not found"
+								);
+							}
+						}
 					}
 					else {
 						sendToUser(body.notice, command, body, conversation, id, user, t);

@@ -62,7 +62,7 @@
 
 			<div class="setting createMembersSetting">
 				<div class="subtitle">Members</div>
-				<textarea name="groupMembers" rows="7" placeholder='["mmsp","chathns"]'></textarea>
+				<textarea name="groupMembers" rows="7" placeholder='["example","member"]'></textarea>
 				<div class="membershipFileActions">
 					<label class="button">
 						Upload
@@ -103,7 +103,7 @@
 			</div>
 
 			<?php
-				$chatHNSRootAdmin = "admin.chathns";
+				$chatHNSRootAdmin = "";
 				$chatHNSRootConfigPath = dirname(__DIR__, 3)."/server/config.json";
 
 				if (is_file($chatHNSRootConfigPath)) {
@@ -503,7 +503,7 @@
 			<div class="setting settingsMembersSetting groupProtectedSetting hidden">
 				<div class="subtitle">Members</div>
 				<input type="text" name="groupMemberSearch" placeholder="Search member">
-				<textarea name="groupMembers" rows="9" placeholder='["mmsp","chathns"]'></textarea>
+				<textarea name="groupMembers" rows="9" placeholder='["example","member"]'></textarea>
 				<div class="membershipFileActions">
 					<label class="button groupMembersUploadLabel">
 						Upload

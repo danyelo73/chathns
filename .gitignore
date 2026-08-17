@@ -31,3 +31,8 @@ web/data/alf-tickets/
 
 # Manual rollback/debug snapshots
 *.before-*
+
+# Local development backups
+backups/
+*.backup-*
+*.backup.*

@@ -200,10 +200,34 @@ export class ui {
 		let position = input[0].selectionStart;
 
 		let word = words[this.wordForPosition(text, position)];
-		if (word.length > 1) {
+		if (word.length > 1 || word === "/") {
 			$("#completions .body .list").empty();
 
 			switch (word[0]) {
+				case "/":
+					$("#completions .title").html("Commands");
+
+					let commands = this.parent.commands;
+
+					let commandSearch = word.substring(1).toLowerCase();
+
+					options = commands.filter(command => {
+						return command.toLowerCase().startsWith(commandSearch);
+					}).slice(0, 10);
+
+					$.each(options, (k, option) => {
+						let row = $(`
+							<tr class="command">
+								<td class="title">/${option}</td>
+							</tr>
+						`);
+
+						$("#completions .body .list").append(row);
+					});
+
+					closeIfNeeded = true;
+					break;
+
 				case "@":
 					$("#completions .title").html("Users");
 
